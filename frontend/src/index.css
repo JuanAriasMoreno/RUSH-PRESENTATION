@@ -1,0 +1,165 @@
+@import 'tailwindcss';
+
+/* ==========================================================================
+   RUSH! design tokens
+   Dark navy foundation + neon accents. Every component uses these names;
+   change a value here and the whole app follows.
+   ========================================================================== */
+@theme {
+  --font-sans: 'Inter', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Poppins', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', system-ui, sans-serif;
+
+  /* foundation */
+  --color-night: #05091f; /* page background (deep navy) */
+  --color-night-2: #080d25; /* almost-black navy */
+  --color-panel: #0d1433; /* cards */
+  --color-panel-2: #121b42; /* raised / inputs */
+  --color-panel-3: #19235a; /* hover / selected */
+  --color-line: rgb(255 255 255 / 0.1);
+  --color-line-strong: rgb(255 255 255 / 0.2);
+
+  /* text */
+  --color-fg: #ffffff;
+  --color-fg-soft: #cfd4f2;
+  --color-muted: #8f97c4;
+  --color-faint: #5d6592;
+
+  /* neon accents (used with intent, see docs/DESIGN_SYSTEM.md) */
+  --color-magenta: #f000c8; /* primary action / brand */
+  --color-violet: #a020f0; /* secondary brand, gradients */
+  --color-cyan: #00d9ff; /* information, links, timers */
+  --color-lime: #39f500; /* success, correct */
+  --color-sun: #ffe600; /* highlights, winners, favourites */
+  --color-tangerine: #ff9500; /* warnings, drafts, live */
+  --color-danger: #ff3030; /* destructive, errors, wrong */
+  /* text-safe tints of the accents (WCAG AA on panels) */
+  --color-pink: #ff6be2;
+  --color-danger-soft: #ff6b6b;
+
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+  --radius-3xl: 1.75rem;
+
+  --shadow-glow-magenta: 0 0 0 1px rgb(240 0 200 / 0.35), 0 8px 28px -6px rgb(240 0 200 / 0.55);
+  --shadow-glow-cyan: 0 0 0 1px rgb(0 217 255 / 0.35), 0 8px 28px -6px rgb(0 217 255 / 0.45);
+  --shadow-glow-lime: 0 0 0 1px rgb(57 245 0 / 0.35), 0 8px 28px -6px rgb(57 245 0 / 0.45);
+  --shadow-card: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 12px 32px -16px rgb(0 0 0 / 0.7);
+
+  --animate-pop: rush-pop 180ms ease-out;
+  --animate-float: rush-float 6s ease-in-out infinite;
+  --animate-glow: rush-glow 2.4s ease-in-out infinite;
+  --animate-tile: rush-tile 3.2s ease-in-out infinite;
+  --animate-shimmer: rush-shimmer 6s linear infinite;
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    color-scheme: dark;
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-night font-sans text-fg antialiased;
+  }
+  h1, h2, h3, h4 {
+    @apply font-display;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-cyan;
+  }
+  ::selection {
+    @apply bg-magenta/40 text-white;
+  }
+  /* native controls on dark surfaces */
+  select option {
+    @apply bg-panel-2 text-fg;
+  }
+  input[type='number']::-webkit-inner-spin-button {
+    opacity: 0.5;
+  }
+}
+
+@layer components {
+  /* Gradient text used by the RUSH! wordmark and display headings */
+  .text-neon {
+    /* starts and ends on the same colour so the shimmer loops without a seam */
+    background: linear-gradient(100deg, var(--color-sun) 0%, var(--color-tangerine) 15%, var(--color-magenta) 35%, var(--color-violet) 55%, var(--color-cyan) 75%, var(--color-sun) 100%);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  /* Subtle starfield / glow behind app pages */
+  .app-backdrop {
+    background:
+      radial-gradient(60rem 30rem at 85% -10%, rgb(160 32 240 / 0.18), transparent 60%),
+      radial-gradient(50rem 26rem at -10% 10%, rgb(0 217 255 / 0.1), transparent 60%),
+      radial-gradient(40rem 30rem at 50% 120%, rgb(240 0 200 / 0.1), transparent 60%),
+      var(--color-night);
+  }
+}
+
+@keyframes rush-pop {
+  0% { transform: scale(0.96); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes rush-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+@keyframes rush-glow {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+@keyframes rush-tile {
+  0%, 100% { opacity: 0.55; }
+  45% { opacity: 1; }
+}
+@keyframes rush-shimmer {
+  from { background-position: 0% 50%; }
+  to { background-position: 200% 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/*
+=========================================================
+EXPLICACIÓN DEL ARCHIVO
+=========================================================
+
+Propósito: Define los tokens del sistema de diseño (colores, fuentes, sombras, animaciones) y los
+estilos base de toda la interfaz.
+
+Responsabilidades principales:
+- Importar Tailwind CSS 4 y declarar en @theme los colores (night, panel, magenta, cyan, lime, sun,
+  tangerine, danger…), las fuentes Poppins/Inter, los radios y las sombras de brillo.
+- Estilos base: fondo oscuro, tipografía de títulos, anillo de foco cian y selección de texto.
+- Clases .text-neon (texto con degradado) y .app-backdrop (fondo con resplandores).
+- Animaciones (pop, float, glow, tile, shimmer) desactivadas si el usuario prefiere menos
+  movimiento.
+
+Elementos importantes:
+- @theme
+- @layer base
+- @layer components
+- @keyframes rush-*
+
+Dependencias:
+- tailwindcss
+
+Flujo de datos:
+Lo importa main.tsx; las clases de Tailwind de todos los componentes se basan en estos tokens.
+
+Aspectos técnicos importantes:
+- Cambiar un valor en @theme cambia el aspecto de toda la aplicación.
+
+Lugar en la arquitectura:
+Capa de presentación. Base visual de RUSH! (documentada en docs/DESIGN_SYSTEM.md).
+*/

@@ -1,0 +1,69 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+.vite/
+
+# Environment files (keep only the template)
+.env
+.env.*
+!.env.example
+
+# Local uploads (user media)
+backend/uploads/
+
+# Test output
+coverage/
+frontend/playwright-report/
+frontend/test-results/
+blob-report/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Local database dumps, backups and temporary files
+*.dump
+*.sql.gz
+*.bak
+*.tmp
+dumps/
+backups/
+.cache/
+~$*
+
+# Editor, OS and local tool folders
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+.claude/
+*.swp
+
+# =========================================================
+# EXPLICACIÓN DEL ARCHIVO
+# =========================================================
+#
+# Propósito: Lista los archivos que Git no debe versionar.
+#
+# Responsabilidades principales:
+# - Excluir node_modules, dist, coverage, archivos .env (salvo .env.example), backend/uploads,
+#   resultados de Playwright, registros y carpetas locales de editores y herramientas.
+#
+# Elementos importantes:
+# - Patrones de exclusión
+#
+# Dependencias:
+# - Git
+#
+# Flujo de datos:
+# Lo lee Git.
+#
+# Aspectos técnicos importantes:
+# - Evita subir secretos (.env) y archivos generados.
+#
+# Lugar en la arquitectura:
+# Configuración del repositorio. Protege secretos y mantiene limpio el repositorio.

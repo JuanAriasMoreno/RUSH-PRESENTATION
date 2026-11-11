@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="RUSH! — learn English and Korean with friends through private rooms and live quizzes." />
+    <meta name="theme-color" content="#05091F" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800;900&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet" />
+    <title>RUSH!</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
+<!--
+=========================================================
+EXPLICACIÓN DEL ARCHIVO
+=========================================================
+
+Propósito: Documento HTML que carga la aplicación de una sola página (SPA).
+
+Responsabilidades principales:
+- Metadatos (codificación, viewport, descripción, color del tema) y favicon.
+- Fuentes Inter, Poppins y Noto Sans KR desde Google Fonts.
+- Elemento <div id="root"> y script /src/main.tsx.
+
+Elementos importantes:
+- <div id="root">
+
+Dependencias:
+- Google Fonts
+- src/main.tsx
+
+Flujo de datos:
+El navegador lo descarga primero; React dibuja la interfaz dentro de #root.
+
+Aspectos técnicos importantes:
+- Sin conexión a internet se usan fuentes del sistema.
+
+Lugar en la arquitectura:
+Capa de presentación (punto de carga). Entrada del navegador a la aplicación.
+-->

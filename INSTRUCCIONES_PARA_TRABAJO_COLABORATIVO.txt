@@ -1,0 +1,229 @@
+﻿======================================================================
+ RUSH! - INSTRUCCIONES PARA TRABAJO COLABORATIVO
+======================================================================
+
+Repositorio (privado):  https://github.com/JuanAriasMoreno/RUSH-PRESENTATION
+Rama principal:         main
+
+El repositorio guarda el CÓDIGO del proyecto. NO guarda la base de datos
+de nadie ni las contraseñas: cada integrante tiene su propia base de datos
+local y su propio archivo .env en su computador.
+
+
+----------------------------------------------------------------------
+ PARTE A - LO QUE HACE EL DUEÑO DEL REPOSITORIO (ANTES DE INVITAR)
+----------------------------------------------------------------------
+
+1. Encontrar y compartir el enlace
+   - En GitHub Desktop: menú Repository > View on GitHub.
+   - O en el navegador: https://github.com/JuanAriasMoreno/RUSH-PRESENTATION
+   - Copie ese enlace y compártalo con el equipo (WhatsApp, correo, etc.).
+
+   IMPORTANTE: como el repositorio es PRIVADO, compartir el enlace NO es
+   suficiente. Quien no esté invitado verá "404 - Page not found". Cada
+   compañero debe ser invitado como colaborador (paso 3).
+
+2. Cómo piden acceso los compañeros
+   GitHub no tiene un botón de "solicitar acceso" para repositorios
+   privados. Cada compañero debe enviarle al dueño su NOMBRE DE USUARIO de
+   GitHub (o el correo de su cuenta de GitHub) por el chat del grupo.
+
+3. Invitar desde GitHub > Settings > Collaborators
+   a) Abra el repositorio en github.com (con la cuenta dueña).
+   b) Clic en "Settings" (pestaña superior del repositorio).
+   c) En el menú izquierdo: "Collaborators" (o "Collaborators and teams").
+      GitHub puede pedir confirmar la contraseña o un código.
+   d) Clic en "Add people".
+   e) Escriba el usuario o correo EXACTO que le envió el compañero,
+      selecciónelo y confirme con "Add ... to this repository".
+   f) Repita para cada integrante. Invite solo a personas que conozca.
+
+4. Permiso que necesitan
+   Necesitan permiso de ESCRITURA (Write) para subir sus ramas y abrir
+   Pull Requests.
+   - En una cuenta personal de GitHub (este caso) todo colaborador recibe
+     automáticamente acceso de lectura y escritura: no hay que elegir rol.
+   - Si algún día el repositorio se mueve a una organización, elegir el
+     rol "Write". No dar "Admin".
+   - Nota: en la cuenta gratuita, GitHub no puede BLOQUEAR que alguien
+     haga cambios directos en main en un repositorio privado. Por eso la
+     regla "nunca trabajar en main" depende de que todos la cumplan.
+
+5. Cómo aceptan la invitación
+   El compañero recibe un correo de GitHub ("invited you to collaborate").
+   Debe abrirlo y pulsar "Accept invitation". También puede entrar a
+   https://github.com/notifications o al enlace del repositorio estando
+   conectado. La invitación caduca a los 7 días; si caduca, se invita de
+   nuevo.
+
+6. Confirmar que ya tienen acceso
+   - Dueño: en Settings > Collaborators el estado cambia de
+     "Pending invite" a la persona sin la palabra "Pending".
+   - Compañero: puede abrir el enlace del repositorio y ver los archivos.
+
+
+----------------------------------------------------------------------
+ PARTE B - LO QUE HACE CADA COMPAÑERO PARA EMPEZAR
+----------------------------------------------------------------------
+
+Programas necesarios (Windows):
+   - GitHub Desktop .......... https://desktop.github.com
+   - Node.js 20 o superior ... https://nodejs.org (versión LTS; trae npm)
+   - Docker Desktop .......... https://www.docker.com/products/docker-desktop
+     (sirve para tener MySQL 8 sin instalarlo a mano)
+   - Visual Studio Code u otro editor (recomendado)
+
+1. Instalar GitHub Desktop (enlace de arriba).
+
+2. Tener cuenta de GitHub
+   Cree una en https://github.com si no tiene. Envíe su nombre de usuario
+   al dueño del repositorio.
+
+3. Pedir y aceptar el acceso
+   Acepte la invitación que llega por correo (ver Parte A, paso 5).
+
+4. Abrir GitHub Desktop
+   Inicie sesión: File > Options > Accounts > Sign in.
+
+5. Clonar el repositorio en su computador
+   File > Clone repository > pestaña "GitHub.com" > elija
+   JuanAriasMoreno/RUSH-PRESENTATION > elija la carpeta local > Clone.
+   (Si no aparece, use la pestaña "URL" y pegue el enlace del repositorio.)
+
+   Recomendación: clone en una carpeta FUERA de OneDrive, por ejemplo
+   C:\Proyectos, para evitar problemas de sincronización con node_modules.
+
+6. Instalar las dependencias
+   En GitHub Desktop: Repository > Open in Command Prompt (o abra una
+   terminal en la carpeta del proyecto) y ejecute:
+
+       npm install
+
+7. Crear su propio archivo .env a partir de .env.example
+   Windows (Command Prompt):     copy .env.example .env
+   Windows (PowerShell):         Copy-Item .env.example .env
+   macOS / Linux:                cp .env.example .env
+
+   Abra .env con el editor y cambie SESSION_SECRET por un texto largo y
+   aleatorio. Puede generarlo con:
+
+       node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
+
+   Lo demás puede quedar como viene en .env.example para trabajar en local
+   (MySQL en el puerto 3307, base de datos "rush", base de pruebas
+   "rush_test"). Las claves de Google/OpenAI y el SMTP son opcionales:
+   - Para probar la traducción sin clave, ponga TRANSLATION_PROVIDER=mock
+   - Sin SMTP, los correos se muestran en la consola del backend.
+   NUNCA suba el archivo .env a GitHub (ya está excluido en .gitignore).
+
+8. Preparar la base de datos local
+   a) Abra Docker Desktop y espere a que diga que está funcionando.
+   b) En la carpeta del proyecto:
+
+       npm run db:up       (crea y arranca el contenedor MySQL "rush-mysql-dev")
+       npm run db:init     (crea las tablas en su base de datos "rush")
+
+   c) Opcional, datos de demostración:
+
+       npm run db:seed
+
+      Crea los usuarios admin, ana, ben y cho con la contraseña
+      rush-demo-1234, una sala y un cuestionario.
+   d) Otro día, si el computador se reinició, solo arranque MySQL con
+      "npm run db:up" (o docker start rush-mysql-dev).
+
+   Si otro compañero cambia el esquema de la base de datos, al arrancar el
+   backend se aplican solas las migraciones (o ejecute npm run db:migrate).
+   No hace falta borrar nada.
+
+9. Ejecutar la aplicación y comprobar que funciona
+
+       npm run dev
+
+   Abra http://localhost:5173 en el navegador (el backend queda en
+   http://localhost:4000). Registre un usuario o entre con ana /
+   rush-demo-1234 si cargó los datos de demostración.
+   Para detenerla: Ctrl + C en la terminal.
+
+10. Antes de empezar cada tarea: traer lo último de main
+    En GitHub Desktop, arriba en "Current branch" elija main, pulse
+    "Fetch origin" y luego "Pull origin".
+
+11. Crear una rama para su tarea
+    Current branch > New branch > escriba el nombre > "Create branch"
+    (basada en main). Ejemplos de nombres:
+
+       feature/login-improvements
+       feature/new-quiz-functionality
+       fix/results-page
+       docs/update-readme
+
+    feature/ = algo nuevo, fix/ = corregir un error, docs/ = documentación.
+
+12. Hacer los cambios y probarlos
+    Trabaje en su editor. Antes de entregar, ejecute en la terminal:
+
+       npm run typecheck
+       npm test
+       npm run build
+
+    (npm test usa una base de pruebas aparte, "rush_test"; no toca sus
+    datos de desarrollo.)
+
+13. Commit y subir la rama
+    En GitHub Desktop revise la lista de archivos cambiados (que NO
+    aparezcan .env, node_modules ni archivos personales), escriba un
+    resumen claro (por ejemplo "Add timer hint to quiz editor") y pulse
+    "Commit to <su-rama>". Luego "Publish branch" la primera vez, o
+    "Push origin" las siguientes.
+
+14. Abrir un Pull Request hacia main
+    En GitHub Desktop: "Create Pull Request" (o Branch > Create Pull
+    Request). Se abre GitHub en el navegador: verifique que diga
+    "base: main <- compare: su-rama", describa qué cambió y cómo lo probó,
+    y pulse "Create pull request".
+
+15. Esperar revisión antes de unir (merge)
+    Otro integrante revisa el Pull Request. Si pide cambios, hágalos en la
+    misma rama y vuelva a hacer commit + Push origin (el Pull Request se
+    actualiza solo). Cuando esté aprobado, se pulsa "Merge pull request" y
+    después se puede borrar la rama.
+
+¿Qué es un Pull Request y para qué sirve?
+   Es una solicitud para unir los cambios de su rama a main. Permite que
+   otra persona revise el código antes de que llegue a la versión que usa
+   todo el equipo, detectar errores a tiempo y evitar que alguien borre o
+   pise el trabajo de otro.
+
+Si GitHub dice que hay un conflicto:
+   Branch > Update from main en GitHub Desktop, resuelva los archivos que
+   indique (pregunte al autor del otro cambio si hay dudas), pruebe de
+   nuevo y haga Push origin.
+
+
+----------------------------------------------------------------------
+ PARTE C - REGLAS IMPORTANTES DE COLABORACIÓN
+----------------------------------------------------------------------
+
+ 1. Nunca trabajar directamente en main.
+ 2. Cada persona trabaja en su propia rama, una rama por tarea.
+ 3. No subir archivos .env, contraseñas ni claves de API.
+ 4. No subir la carpeta node_modules (ni dist, ni backend/uploads).
+ 5. No sobrescribir ni borrar el trabajo de otra persona.
+ 6. Traer los últimos cambios de main (Fetch + Pull) antes de cada tarea.
+ 7. Probar los cambios (typecheck, test, build) antes de abrir un
+    Pull Request.
+ 8. No unir (merge) cambios sin la revisión de otro integrante.
+ 9. Los cambios al esquema de la base de datos se acuerdan con el equipo
+    antes de hacerlos (y se agrega una migración; ver CONTRIBUTING.md).
+10. Nunca ejecutar npm run db:reset ni borrar datos compartidos o
+    importantes sin aprobación del equipo.
+
+Recuerde: cada integrante tiene su PROPIA base de datos local y su PROPIO
+.env. Lo que cree en su base de datos (usuarios, salas, cuestionarios) no
+le aparece a los demás; solo se comparte el código a través de GitHub.
+
+Más detalles: README.md (instalación completa) y CONTRIBUTING.md (reglas
+de ramas, commits y Pull Requests). Manuales en Word:
+RUSH_Guia_de_Comprension_del_Proyecto.docx y
+RUSH_Manual_Tecnico_y_Explicacion_Completa.docx.

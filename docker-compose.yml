@@ -1,0 +1,49 @@
+# Local development / test MySQL server. Data is kept in the named volume "rush-mysql-data".
+# The schema is NOT applied automatically: run `npm run db:init` (see README).
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: rush-mysql-dev
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rush_root_dev}
+    ports:
+      - "${MYSQL_HOST_PORT:-3307}:3306"
+    command: ["--default-time-zone=+00:00"]
+    volumes:
+      - rush-mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-p${MYSQL_ROOT_PASSWORD:-rush_root_dev}"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+volumes:
+  rush-mysql-data:
+
+# =========================================================
+# EXPLICACIÓN DEL ARCHIVO
+# =========================================================
+#
+# Propósito: Define el servicio de base de datos MySQL 8.0 para desarrollo local.
+#
+# Responsabilidades principales:
+# - Servicio mysql con imagen mysql:8.0 y contenedor rush-mysql-dev.
+# - Puerto del equipo MYSQL_HOST_PORT (3307 por defecto) hacia el 3306 del contenedor.
+# - Zona horaria UTC, volumen rush-mysql-data para persistir los datos y comprobación de salud con
+#   mysqladmin ping.
+#
+# Elementos importantes:
+# - services.mysql
+# - volumes.rush-mysql-data
+#
+# Dependencias:
+# - Docker
+#
+# Flujo de datos:
+# Lo usa npm run db:up (docker compose up -d mysql).
+#
+# Aspectos técnicos importantes:
+# - El esquema no se aplica automáticamente: hay que ejecutar npm run db:init.
+# - El volumen conserva los datos aunque el contenedor se detenga o se elimine.
+#
+# Lugar en la arquitectura:
+# Infraestructura. Proporciona el servidor de base de datos.
