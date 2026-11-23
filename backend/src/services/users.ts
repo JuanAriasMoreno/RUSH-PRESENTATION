@@ -7,12 +7,18 @@ import { db, mysqlErrorCode, transaction } from '../db';
 import type { UserRow } from '../db/types';
 import { AppError, badRequest, conflict, notFound } from '../http/errors';
 import { hooks } from './hooks';
+import { SECURITY_QUESTION_COUNT } from '@rush/shared';
+
 
 const BCRYPT_ROUNDS = process.env.VITEST ? 4 : 12;
 // Used to keep login timing similar when the account does not exist.
 const DUMMY_HASH = bcrypt.hashSync('dummy-password-for-timing', BCRYPT_ROUNDS);
 
 export const hashPassword = (password: string) => bcrypt.hash(password, BCRYPT_ROUNDS);
+const MAX_RECOVERY_ATTEMPTS = 5;
+const RECOVERY_LOCK_MINUTES = 15;
+
+export const normalizeAnswer = (raw: string) => raw.trim().toLowerCase().replace(/\s+/g, ' ');
 
 export function toPublicUser(u: Pick<UserRow, 'user_id' | 'full_name' | 'username' | 'profile_picture_url' | 'description' | 'learning_language'>): PublicUserDto {
   return {
@@ -63,11 +69,19 @@ async function assertAvailable(username: string, email?: string, exceptUserId?: 
 export async function register(input: z.infer<typeof registerSchema>): Promise<number> {
   await assertAvailable(input.username, input.email);
   const passwordHash = await hashPassword(input.password);
+  const answerHash = await hashPassword(normalizeAnswer(input.securityAnswer));
   try {
     return await transaction(async (tx) => {
       const res = await tx
         .insertInto('user')
-        .values({ full_name: input.fullName, username: input.username, email: input.email, password_hash: passwordHash })
+        .values({
+          full_name: input.fullName,
+          username: input.username,
+          email: input.email,
+          password_hash: passwordHash,
+          security_question_id: input.securityQuestionId,
+          security_answer_hash: answerHash,
+        })
         .executeTakeFirstOrThrow();
       const userId = Number(res.insertId);
       await tx.insertInto('user_preferences').values({ user_id: userId }).execute();
@@ -79,6 +93,7 @@ export async function register(input: z.infer<typeof registerSchema>): Promise<n
   }
 }
 
+
 export async function verifyCredentials(identifier: string, password: string): Promise<number | null> {
   const id = identifier.trim();
   const row = await db
@@ -89,6 +104,56 @@ export async function verifyCredentials(identifier: string, password: string): P
   const ok = await bcrypt.compare(password, row?.password_hash ?? DUMMY_HASH);
   return row && ok ? row.user_id : null;
 }
+
+/** Returns the user's question id; unknown accounts get a stable fake id so existence is not revealed. */
+export async function getRecoveryQuestionId(identifier: string): Promise<number> {
+  const id = identifier.trim();
+  const row = await db
+    .selectFrom('user')
+    .select('security_question_id')
+    .where((eb) => eb.or([eb('username', '=', id), eb('email', '=', id.toLowerCase())]))
+    .executeTakeFirst();
+  if (row?.security_question_id) return row.security_question_id;
+  let sum = 0;
+  for (const ch of id.toLowerCase()) sum += ch.charCodeAt(0);
+  return (sum % SECURITY_QUESTION_COUNT) + 1;
+}
+
+/** Checks the answer and sets a new password. Returns the user id, or null on any failure. */
+export async function resetPasswordWithAnswer(identifier: string, answer: string, newPassword: string): Promise<number | null> {
+  const id = identifier.trim();
+  const row = await db
+    .selectFrom('user')
+    .select(['user_id', 'security_answer_hash', 'recovery_failed_attempts', 'recovery_locked_until'])
+    .where((eb) => eb.or([eb('username', '=', id), eb('email', '=', id.toLowerCase())]))
+    .executeTakeFirst();
+  // Always run bcrypt so the response time is similar for unknown accounts.
+  const ok = await bcrypt.compare(normalizeAnswer(answer), row?.security_answer_hash ?? DUMMY_HASH);
+  if (!row || !row.security_answer_hash) return null;
+  if (row.recovery_locked_until && row.recovery_locked_until > new Date()) return null;
+
+  if (!ok) {
+    const attempts = row.recovery_failed_attempts + 1;
+    const locked = attempts >= MAX_RECOVERY_ATTEMPTS;
+    await db
+      .updateTable('user')
+      .set({
+        recovery_failed_attempts: locked ? 0 : attempts,
+        recovery_locked_until: locked ? new Date(Date.now() + RECOVERY_LOCK_MINUTES * 60_000) : null,
+      })
+      .where('user_id', '=', row.user_id)
+      .execute();
+    return null;
+  }
+
+  await db
+    .updateTable('user')
+    .set({ password_hash: await hashPassword(newPassword), recovery_failed_attempts: 0, recovery_locked_until: null })
+    .where('user_id', '=', row.user_id)
+    .execute();
+  return row.user_id;
+}
+
 
 export async function updateProfile(userId: number, input: z.infer<typeof updateProfileSchema>): Promise<void> {
   if (input.username) await assertAvailable(input.username, undefined, userId);

@@ -4,7 +4,7 @@ import { useAuth } from './auth/AuthProvider';
 import { AppLayout } from './components/Layout';
 import { LoadingState, NotFoundState } from './components/ui';
 import { AdminPage } from './features/admin/AdminPage';
-import { LoginPage, RegisterPage } from './features/auth/AuthPages';
+import { ForgotPasswordPage, LoginPage, RegisterPage } from './features/auth/AuthPages';
 import { DashboardPage } from './features/dashboard/DashboardPage';
 import { LandingPage } from './features/landing/LandingPage';
 import { PlayPage } from './features/play/PlayPage';
@@ -34,6 +34,7 @@ export function App() {
     <Routes>
       <Route path="/login" element={me ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
       <Route path="/register" element={me ? <Navigate to="/dashboard" replace /> : <RegisterPage />} />
+      <Route path="/forgot-password" element={me ? <Navigate to="/dashboard" replace /> : <ForgotPasswordPage />} />
       {/* public landing page */}
       <Route path="/" element={<LandingPage />} />
       <Route path="/dashboard" element={<RequireAuth><DashboardPage /></RequireAuth>} />

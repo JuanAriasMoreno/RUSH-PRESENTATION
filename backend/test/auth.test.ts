@@ -23,10 +23,10 @@ describe('registration and login', () => {
 
   it('rejects duplicate usernames and emails', async () => {
     await registerUser('bob');
-    const dupName = await request(app).post('/api/auth/register').send({ fullName: 'B', username: 'bob', email: 'other@example.test', password: PASSWORD });
+    const dupName = await request(app).post('/api/auth/register').send({ fullName: 'B', username: 'bob', email: 'other@example.test', password: PASSWORD, securityQuestionId: 1, securityAnswer: 'rex' });
     expect(dupName.status).toBe(409);
     expect(dupName.body.error.code).toBe('username_taken');
-    const dupEmail = await request(app).post('/api/auth/register').send({ fullName: 'B', username: 'bob2', email: 'BOB@example.test', password: PASSWORD });
+    const dupEmail = await request(app).post('/api/auth/register').send({ fullName: 'B', username: 'bob2', email: 'BOB@example.test', password: PASSWORD, securityQuestionId: 1, securityAnswer: 'rex' });
     expect(dupEmail.status).toBe(409);
     expect(dupEmail.body.error.code).toBe('email_taken');
   });

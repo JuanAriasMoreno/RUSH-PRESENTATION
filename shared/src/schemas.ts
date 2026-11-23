@@ -16,14 +16,33 @@ export const usernameSchema = z
   .max(30)
   .regex(/^[A-Za-z0-9_.]+$/, 'username_chars');
 
+
 export const passwordSchema = z.string().min(8, 'password_too_short').max(128);
+
+export const SECURITY_QUESTION_COUNT = 10;
+
+export const securityQuestionIdSchema = z.number().int().min(1).max(SECURITY_QUESTION_COUNT);
+export const securityAnswerSchema = z.string().trim().min(2, 'answer_too_short').max(100);
+
+export const recoveryQuestionSchema = z.object({ identifier: trimmed(1, 255) });
+
+export const recoveryResetSchema = z.object({
+  identifier: trimmed(1, 255),
+  answer: z.string().trim().min(1).max(100),
+  newPassword: passwordSchema,
+});
 
 export const registerSchema = z.object({
   fullName: trimmed(1, 100),
   username: usernameSchema,
   email: z.string().trim().toLowerCase().email().max(255),
   password: passwordSchema,
+  securityQuestionId: securityQuestionIdSchema,
+  securityAnswer: securityAnswerSchema,
 });
+
+
+
 
 export const loginSchema = z.object({
   identifier: trimmed(1, 255), // username or email

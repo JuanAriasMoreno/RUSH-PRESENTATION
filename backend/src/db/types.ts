@@ -22,7 +22,12 @@ export interface UserTable {
   account_role: Generated<'USER' | 'SUPERADMIN'>;
   created_at: CreatedAt;
   updated_at: UpdatedAt;
+  security_question_id: number | null;
+  security_answer_hash: string | null;
+  recovery_failed_attempts: Generated<number>; // DB default 0
+  recovery_locked_until: Date | null;
 }
+
 
 export interface UserPreferencesTable {
   user_id: number;
