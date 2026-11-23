@@ -34,12 +34,16 @@ export interface SessionInfoDto {
 export const authApi = {
   me: () => get<MeDto>('/auth/me'),
   login: (identifier: string, password: string) => post<MeDto>('/auth/login', { identifier, password }),
-  register: (body: { fullName: string; username: string; email: string; password: string }) => post<MeDto>('/auth/register', body),
-  logout: () => post<void>('/auth/logout'),
+  register: (body: { fullName: string; username: string; email: string; password: string; securityQuestionId: number; securityAnswer: string }) =>
+  post<MeDto>('/auth/register', body),
   updateProfile: (body: Partial<{ fullName: string; username: string; profilePictureUrl: string | null; description: string | null; learningLanguage: Language | null }>) =>
     patch<MeDto>('/me/profile', body),
   updatePreferences: (body: { translationTargetLanguage: Language }) => patch<MeDto>('/me/preferences', body),
   changePassword: (currentPassword: string, newPassword: string) => post<void>('/me/password', { currentPassword, newPassword }),
+  recoveryQuestion: (identifier: string) => post<{ questionId: number }>('/auth/recovery/question', { identifier }),
+    recoveryReset: (identifier: string, answer: string, newPassword: string) =>
+      post<void>('/auth/recovery/reset', { identifier, answer, newPassword }),
+
   deleteAccount: (password: string) => del('/me', { password }),
   profile: (username: string) => get<PublicUserDto>(`/users/${encodeURIComponent(username)}`),
 };

@@ -49,6 +49,7 @@ describe('RegisterPage', () => {
     await user.type(screen.getByLabelText('Username'), 'ana');
     await user.type(screen.getByLabelText('Email'), 'ana@example.com');
     await user.type(screen.getByLabelText('Password'), 'long-enough-password');
+    await user.type(screen.getByLabelText('Your answer'), 'rex');
     await user.click(screen.getByRole('button', { name: 'Create account' }));
     expect(await screen.findByText('This username is already taken.')).toBeInTheDocument();
   });

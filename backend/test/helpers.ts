@@ -28,7 +28,7 @@ export async function registerUser(name?: string): Promise<TestUser> {
   counter += 1;
   const username = name ?? `user${counter}_${Math.random().toString(36).slice(2, 7)}`;
   const email = `${username}@example.test`;
-  const res = await request(app).post('/api/auth/register').send({ fullName: `Test ${username}`, username, email, password: PASSWORD });
+  const res = await request(app).post('/api/auth/register').send({ fullName: `Test ${username}`, username, email, password: PASSWORD, securityQuestionId: 1, securityAnswer: 'rex' });
   if (res.status !== 201) throw new Error(`register failed: ${res.status} ${JSON.stringify(res.body)}`);
   return { userId: res.body.userId, username, email, cookie: cookieFrom(res) };
 }

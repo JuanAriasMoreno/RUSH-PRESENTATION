@@ -3,10 +3,13 @@ import {
   changePasswordSchema,
   deleteAccountSchema,
   loginSchema,
+  recoveryQuestionSchema,
+  recoveryResetSchema,
   registerSchema,
   updatePreferencesSchema,
   updateProfileSchema,
 } from '@rush/shared';
+
 import { AppError, parse } from '../http/errors';
 import { ah, authLimiter, currentUser, requireAuth, sensitiveLimiter } from '../http/middleware';
 import { destroyUserSessions, SESSION_COOKIE } from '../http/session';
@@ -25,6 +28,23 @@ function establishSession(req: Request, userId: number): Promise<void> {
     });
   });
 }
+
+authRouter.post('/auth/recovery/question', authLimiter, ah(async (req, res) => {
+  const { identifier } = parse(recoveryQuestionSchema, req.body);
+  // Unknown accounts get a stable fake question id so account existence is not revealed.
+  const questionId = await users.getRecoveryQuestionId(identifier);
+  res.json({ questionId });
+}));
+
+authRouter.post('/auth/recovery/reset', sensitiveLimiter, ah(async (req, res) => {
+  const { identifier, answer, newPassword } = parse(recoveryResetSchema, req.body);
+  const userId = await users.resetPasswordWithAnswer(identifier, answer, newPassword);
+  // Unknown account, no question set, wrong answer and locked account all give the same message.
+  if (!userId) throw new AppError(401, 'invalid_recovery', 'Incorrect information');
+  await destroyUserSessions(userId); // log out every device
+  hooks.userGone(userId);
+  res.status(204).end();
+}));
 
 authRouter.post('/auth/register', authLimiter, ah(async (req, res) => {
   const input = parse(registerSchema, req.body);

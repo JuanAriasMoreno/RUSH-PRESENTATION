@@ -7,6 +7,7 @@ import { useAuth } from '../../auth/AuthProvider';
 import { Logo, NeonFloor } from '../../components/brand';
 import { Button, FormError, TextField } from '../../components/ui';
 import { useI18n } from '../../i18n/I18nProvider';
+import { SECURITY_QUESTIONS, questionText } from './securityQuestions';
 
 function useNext() {
   const [params] = useSearchParams();
@@ -93,6 +94,9 @@ export function LoginPage() {
       <form className="space-y-4" onSubmit={submit} noValidate>
         <TextField label={t('auth.identifier')} autoComplete="username" value={identifier} onChange={(e) => setIdentifier(e.target.value)} required />
         <TextField label={t('auth.password')} type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+        <div className="text-right text-sm">
+          <Link className={linkClass} to="/forgot-password">Forgot your password?</Link>
+        </div>
         <FormError error={error} />
         <Button type="submit" className="w-full" size="lg" loading={busy} disabled={!identifier || !password}>
           {t('auth.login')}
@@ -107,11 +111,14 @@ export function RegisterPage() {
   const { setMe } = useAuth();
   const nav = useNavigate();
   const next = useNext();
-  const [form, setForm] = useState({ fullName: '', username: '', email: '', password: '' });
+  const [form, setForm] = useState({ fullName: '', username: '', email: '', password: '', securityQuestionId: 1, securityAnswer: '' });
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
-  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, [k]: e.target.value });
+  const set = (k: 'fullName' | 'username' | 'email' | 'password') => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm({ ...form, [k]: e.target.value });
+  const setQuestion = (e: React.ChangeEvent<HTMLSelectElement>) => setForm({ ...form, securityQuestionId: Number(e.target.value) });
+  const setAnswer = (e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, securityAnswer: e.target.value });
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -122,7 +129,10 @@ export function RegisterPage() {
       for (const issue of parsed.error.issues) {
         const k = String(issue.path[0]);
         errs[k] ??=
-          k === 'password' ? t('auth.passwordHint') : k === 'username' ? t('auth.usernameHint') : t('err.validation_error');
+          k === 'password' ? t('auth.passwordHint')
+          : k === 'username' ? t('auth.usernameHint')
+          : k === 'securityAnswer' ? 'Enter an answer of at least 2 characters.'
+          : t('err.validation_error');
       }
       setFieldErrors(errs);
       return;
@@ -158,11 +168,97 @@ export function RegisterPage() {
         <TextField label={t('auth.username')} autoComplete="username" value={form.username} onChange={set('username')} error={fieldErrors.username} hint={t('auth.usernameHint')} maxLength={30} />
         <TextField label={t('auth.email')} type="email" autoComplete="email" value={form.email} onChange={set('email')} error={fieldErrors.email} hint={t('auth.emailHint')} />
         <TextField label={t('auth.password')} type="password" autoComplete="new-password" value={form.password} onChange={set('password')} error={fieldErrors.password} hint={t('auth.passwordHint')} />
+        <label className="block text-sm font-semibold text-fg-soft">
+          Security question (used to recover your password)
+          <select
+            className="mt-1 w-full rounded-xl border border-line-strong bg-night px-3 py-2 text-fg"
+            value={form.securityQuestionId}
+            onChange={setQuestion}
+          >
+            {SECURITY_QUESTIONS.map((q) => (
+              <option key={q.id} value={q.id}>{q.text}</option>
+            ))}
+          </select>
+        </label>
+        <TextField label="Your answer" value={form.securityAnswer} onChange={setAnswer} error={fieldErrors.securityAnswer} maxLength={100} />
         <FormError error={error} />
         <Button type="submit" className="w-full" size="lg" loading={busy}>
           {t('auth.register')}
         </Button>
       </form>
+    </AuthShell>
+  );
+}
+
+export function ForgotPasswordPage() {
+  const nav = useNavigate();
+  const [step, setStep] = useState<1 | 2>(1);
+  const [identifier, setIdentifier] = useState('');
+  const [questionId, setQuestionId] = useState(1);
+  const [answer, setAnswer] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [error, setError] = useState<unknown>(null);
+  const [passwordError, setPasswordError] = useState<string | undefined>();
+  const [busy, setBusy] = useState(false);
+
+  const findQuestion = async (e: FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await authApi.recoveryQuestion(identifier);
+      setQuestionId(res.questionId);
+      setStep(2);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const reset = async (e: FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (newPassword.length < 8) {
+      setPasswordError('Use at least 8 characters.');
+      return;
+    }
+    setPasswordError(undefined);
+    setBusy(true);
+    try {
+      await authApi.recoveryReset(identifier, answer, newPassword);
+      nav('/login', { replace: true });
+    } catch (err) {
+      setError(err);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <AuthShell
+      title="Recover your password"
+      footer={<Link className={linkClass} to="/login">Back to login</Link>}
+    >
+      {step === 1 ? (
+        <form className="space-y-4" onSubmit={findQuestion} noValidate>
+          <TextField label="Username or email" autoComplete="username" value={identifier} onChange={(e) => setIdentifier(e.target.value)} required />
+          <FormError error={error} />
+          <Button type="submit" className="w-full" size="lg" loading={busy} disabled={!identifier}>
+            Continue
+          </Button>
+        </form>
+      ) : (
+        <form className="space-y-4" onSubmit={reset} noValidate>
+          <p className="text-sm text-fg-soft">{questionText(questionId)}</p>
+          <TextField label="Your answer" value={answer} onChange={(e) => setAnswer(e.target.value)} maxLength={100} required />
+          <TextField label="New password" type="password" autoComplete="new-password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} error={passwordError} />
+          <FormError error={error} />
+          <Button type="submit" className="w-full" size="lg" loading={busy} disabled={!answer || !newPassword}>
+            Reset password
+          </Button>
+        </form>
+      )}
     </AuthShell>
   );
 }
